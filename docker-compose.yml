@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  confluence-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: confluence-mcp-server
+    image: confluence-mcp:latest
+
+    # ポートマッピング（ホスト:コンテナ）
+    ports:
+      - "18000:8000"
+
+    # 環境変数の設定
+    environment:
+      # Atlassian Confluence認証情報（.envファイルから読み込み）
+      - ATLASSIAN_URL=${ATLASSIAN_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+
+      # MCPサーバー設定
+      - MCP_TRANSPORT=${MCP_TRANSPORT}
+      - MCP_HOST=${MCP_HOST}
+      - MCP_PORT=${MCP_PORT}
+
+    # .envファイルから環境変数を読み込み
+    env_file:
+      - .env
+
+    # ヘルスチェック設定（プロセス確認）
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "confluence-mcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # ログ設定（ログファイルの肥大化を防ぐ）
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
